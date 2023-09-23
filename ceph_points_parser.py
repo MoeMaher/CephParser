@@ -9,7 +9,7 @@ from tkinter import ttk
 if getattr(sys, 'frozen', False):  
     root_folder = os.path.dirname(sys.executable)  
 else:  
-    root_folder = "C:\PodcastAi\Ato_ceph"
+    root_folder = "./"
 
 
 def find_red_dots(image_path):
