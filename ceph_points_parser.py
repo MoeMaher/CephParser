@@ -160,16 +160,25 @@ window = None
 patient_folders = [f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))]  
 dot_names = ["sella", "nasion", "A point", "B point", "upper 1 tip", "upper 1 apex", "lower 1 tip", "lower 1 apex", "ANS", "PNS", "Gonion ", "Menton", "ST Nasion", "Tip of the nose", "Subnasal", "Upper lip", "Lower lip", "ST Pogonion"]  
   
+if not patient_folders:  
+    print("No patient folders found. Exiting.")  
+    sys.exit(0) 
+
+
 for patient in patient_folders:  
     image_path = os.path.join(root_folder, patient, 'reddots.JPG')  
     coordinates_file = os.path.join(root_folder, patient, 'coordinates.csv')  
     ceph_image = load_ceph_image(os.path.join(root_folder, patient))  
 
-  
+    if not os.path.exists(image_path):  
+        print(f"No 'reddots.JPG' found for patient {patient}. Skipping.")  
+        continue  
+      
     # Check if the coordinates file exists, if so, skip the patient  
     if os.path.exists(coordinates_file):  
         continue  
   
+
     red_dots = find_red_dots(image_path)  
     image = cv2.imread(image_path)  
   
