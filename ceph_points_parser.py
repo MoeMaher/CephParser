@@ -2,14 +2,72 @@ import cv2
 import os
 import sys
 import pandas as pd  
+import numpy as np
 from tkinter import *  
 from PIL import Image, ImageTk  
 from tkinter import ttk  
+import math
+
+def ang(lineA, lineB):
+    # Get nicer vector form
+    vA = [(lineA[0][0]-lineA[1][0]), (lineA[0][1]-lineA[1][1])]
+    vB = [(lineB[0][0]-lineB[1][0]), (lineB[0][1]-lineB[1][1])]
+    # Get dot prod
+    dot_prod = np.dot(vA, vB)
+    # Get magnitudes
+    magA = np.dot(vA, vA)**0.5
+    magB = np.dot(vB, vB)**0.5
+    # Get cosine value
+    cos_ = dot_prod/magA/magB
+    # Get angle in radians and then convert to degrees
+    angle = math.acos(dot_prod/magB/magA)
+    # Basically doing angle <- angle mod 360
+    ang_deg = math.degrees(angle)
+
+    return ang_deg
 
 if getattr(sys, 'frozen', False):  
     root_folder = os.path.dirname(sys.executable)  
 else:  
     root_folder = "./"
+
+def SNA(s,n,a):
+    print(s,n,a)
+    print(180-ang([s,n], [n,a]))
+    return 180-ang([s,n], [n,a])
+
+def SNB(s,n,b):
+    return 180-ang([s,n], [n,b])
+
+def ANB(s,a,n,b):
+    if SNA(s,n,a)-SNB(s,n,b) >0:
+        return (180- ang([n,b],[a,n]))
+    else:
+        return -1* (180- ang([n,b],[a,n]))
+
+def u1(ans, pns, u_tip, u_apex):
+    return 180-ang([ans,pns], [u_tip, u_apex])
+
+def l1(go, mn, l_tip, l_apex):    
+    return 180- ang([go,mn], [l_apex,l_tip])
+
+def sn_ans_pns(ans, pns, s, n):
+    return 180-ang([s, n],[ans,pns])
+
+def sn_mn_go(go, mn, s, n):  
+    return ang([s, n],[go,mn])
+
+# def print_angles(pateinty):
+#     print("SNA", SNA(pateinty))
+#     print("SNB", SNB(pateinty))
+#     print("ANB", ANB(pateinty))
+#     print("u1", u1(pateinty))
+#     print("l1", l1(pateinty))
+#     print("sn_ans_pns", sn_ans_pns(pateinty))
+#     print("sn_mn_go", sn_mn_go(pateinty))
+
+
+
 
 
 def find_red_dots(image_path):
@@ -74,7 +132,7 @@ def extract_all_coordinates():
         "Lower lip_x": [],  
         "Lower lip_y": [],  
         "ST Pogonion_x": [],  
-        "ST Pogonion_y": []  
+        "ST Pogonion_y": []
     }  
   
     for patient in patient_folders:  
@@ -85,8 +143,8 @@ def extract_all_coordinates():
           
         if os.path.exists(coordinates_file):  
             patient_coordinates = pd.read_csv(coordinates_file)  
-            coord_dict.update({f"{row['dot_name']}_x": row["x"] for _, row in patient_coordinates.iterrows()})  
-            coord_dict.update({f"{row['dot_name']}_y": row["y"] for _, row in patient_coordinates.iterrows()})  
+            coord_dict.update({f"{row['dot_name']}_x": row["x"] for _, row in patient_coordinates.iterrows() if f"{row['dot_name']}_x" in coord_dict.keys()})  
+            coord_dict.update({f"{row['dot_name']}_y": row["y"] for _, row in patient_coordinates.iterrows() if f"{row['dot_name']}_y" in coord_dict.keys()})  
   
         for key, value in coord_dict.items():  
             all_coordinates[key].append(value)  
@@ -154,6 +212,93 @@ def merge_images_horizontally(image1, image2):
   
     return ImageTk.PhotoImage(merged_image) 
 
+def reset_points_selected():  
+    global red_dots, dot_mapping, current_dot_name  
+      
+    # Return the previously selected dots back to the red_dots list  
+    for dot in dot_mapping.values():  
+        red_dots.append(dot)  
+          
+    # Reset the dot_mapping and current_dot_name  
+    dot_mapping = {}  
+    current_dot_name = dot_names[0]  
+      
+    # Update the instructions label  
+    dot_name_label.config(text=f"Select {current_dot_name}")  
+      
+    # Refresh the image to show all the red dots  
+    update_image(ceph_image)  
+
+
+def compute_angles(dot_data):
+    angles = []
+    try:
+        s = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "sella"][0]
+    except IndexError:
+        s = None
+    try:
+        n = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "nasion"][0]
+    except IndexError:
+        n = None
+    try:
+        a = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "A point"][0]
+    except IndexError:
+        a = None
+    try:
+        b = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "B point"][0]
+    except IndexError:
+        b = None
+    try:
+        ans = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "ANS"][0]
+    except IndexError:
+        ans = None
+    try:
+        pns = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "PNS"][0]
+    except IndexError:
+        pns = None
+    try:
+        u_tip = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "upper 1 tip"][0]
+    except IndexError:
+        u_tip = None
+    try:
+        u_apex = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "upper 1 apex"][0]
+    except IndexError:
+        u_apex = None
+    try:
+        l_tip = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "lower 1 tip"][0]
+    except IndexError:
+        l_tip = None
+    try:
+        l_apex = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "lower 1 apex"][0]
+    except IndexError:
+        l_apex = None
+    try:
+        go = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "Gonion "][0]
+    except IndexError:
+        go = None
+    try:
+        mn = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "Menton"][0]
+    except IndexError:
+        mn = None
+
+    # s n a b ans pns u_tip u_apex go mn l_tip l_apex 
+    if s is not None and n is not None and a is not None:
+        angles.append({"dot_name": "SNA", "x": SNA(s,n,a), "y": round(SNA(s,n,a), 1)})
+    if s is not None and n is not None and b is not None:
+        angles.append({"dot_name": "SNB", "x": SNB(s,n,b), "y": round(SNB(s,n,b), 1)})
+    if a is not None and n is not None and b is not None:
+        angles.append({"dot_name": "ANB", "x": ANB(s,a,n,b), "y": round(ANB(s,a,n,b), 1)})
+    if ans is not None and pns is not None and u_tip is not None and u_apex is not None:
+        angles.append({"dot_name": "u1", "x": u1(ans, pns, u_tip, u_apex), "y": round(u1(ans, pns, u_tip, u_apex), 1)})
+    if go is not None and mn is not None and l_tip is not None and l_apex is not None:
+        angles.append({"dot_name": "l1", "x": l1(go, mn, l_tip, l_apex), "y": round(l1(go, mn, l_tip, l_apex), 1)})
+    if ans is not None and pns is not None and s is not None and n is not None:
+        angles.append({"dot_name": "sn_ans_pns", "x": sn_ans_pns(ans, pns, s, n), "y": round(sn_ans_pns(ans, pns, s, n), 1)})
+    if go is not None and mn is not None and s is not None and n is not None:
+        angles.append({"dot_name": "sn_mn_go", "x": sn_mn_go(go, mn, s, n), "y": round(sn_mn_go(go, mn, s, n), 1)})
+
+    return angles
+
 
 window = None
 # root_folder = "./"
@@ -173,7 +318,7 @@ for patient in patient_folders:
     if not os.path.exists(image_path):  
         print(f"No 'reddots.JPG' found for patient {patient}. Skipping.")  
         continue  
-      
+
     # Check if the coordinates file exists, if so, skip the patient  
     if os.path.exists(coordinates_file):  
         continue  
@@ -212,19 +357,29 @@ for patient in patient_folders:
     extract_button = ttk.Button(window, text="Extract All Coordinates", command=extract_all_coordinates)  
     extract_button.pack(side="top", padx=10, pady=10)  
 
+    # Add button to reset the dots selected 
+    reset_button = ttk.Button(window, text="Reset", command=reset_points_selected)
+    reset_button.pack(side="top", padx=10, pady=10)
 
     update_image(ceph_image)  
     window.mainloop()  
   
     # Save the coordinates to a CSV file in the patient's folder  
-    dot_data = [{"dot_name": name, "x": coords[0], "y": coords[1]} for name, coords in dot_mapping.items()]  
+    dot_data = [{"dot_name": name, "x": coords[0], "y": coords[1]} for name, coords in dot_mapping.items()]
+    angles = compute_angles(dot_data)
+    dot_data = dot_data + angles
+    print(dot_data)
     pd.DataFrame(dot_data).to_csv(coordinates_file, index=False, columns=["dot_name", "x", "y"])  
 
-    window.destroy()  
+    window.destroy()
+    window = None
 
 if window is None:  
     window = Tk()  
     window.title("No more patients")  
+
+    extract_button = ttk.Button(window, text="Extract All Coordinates", command=extract_all_coordinates)  
+    extract_button.pack(side="top", padx=10, pady=10)  
     message_label = Label(window, text="You have finished processing all patients in the root directory.", font=("Arial", 14))  
-    message_label.pack(side="top", padx=10, pady=10)  
+    message_label.pack(side="top", padx=10, pady=10)
     window.mainloop()  
