@@ -171,7 +171,9 @@ def on_image_click(event):
     else:  
         window.quit()  
   
-    update_image(ceph_image)  
+    update_image(ceph_image) 
+    update_angles()  # Add this line to update angles  
+ 
   
   
 def update_image(ceph_image):  
@@ -299,6 +301,12 @@ def compute_angles(dot_data):
 
     return angles
 
+def update_angles():  
+    dot_data = [{"dot_name": name, "x": coords[0], "y": coords[1]} for name, coords in dot_mapping.items()]  
+    angles = compute_angles(dot_data)  
+    angle_text = "   ".join([f"{angle['dot_name']}: {angle['y']}" for angle in angles])  
+    angle_label.config(text=angle_text)  
+
 
 window = None
 # root_folder = "./"
@@ -350,16 +358,18 @@ for patient in patient_folders:
     dot_mapping = {}  
   
     dot_name_label = Label(window, text=f"Select {current_dot_name}", font=("Arial", 14))  
-    dot_name_label.pack(side="top", padx=10, pady=10)  
+    dot_name_label.pack(side="top", padx=5, pady=5)  
   
-  
+    angle_label = Label(window, text="", font=("Arial", 11))  
+    angle_label.pack(side="top", padx=5, pady=5)  
+
     # Add the extract coordinates button  
     extract_button = ttk.Button(window, text="Extract All Coordinates", command=extract_all_coordinates)  
-    extract_button.pack(side="top", padx=10, pady=10)  
+    extract_button.pack(side="top", padx=5, pady=5)  
 
     # Add button to reset the dots selected 
     reset_button = ttk.Button(window, text="Reset", command=reset_points_selected)
-    reset_button.pack(side="top", padx=10, pady=10)
+    reset_button.pack(side="top", padx=5, pady=5)
 
     update_image(ceph_image)  
     window.mainloop()  
