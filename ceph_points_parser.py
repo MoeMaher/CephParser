@@ -303,14 +303,69 @@ def compute_angles(dot_data):
 
 def update_angles():  
     dot_data = [{"dot_name": name, "x": coords[0], "y": coords[1]} for name, coords in dot_mapping.items()]  
-    angles = compute_angles(dot_data)  
+    angles = compute_angles(dot_data) 
+    angles_from_dolphine = find_angles_from_dolphine(os.path.join(root_folder, patient)) 
     angle_text = "   ".join([f"{angle['dot_name']}: {angle['y']}" for angle in angles])  
+    angle_text_from_dolphine = "   ".join([f"{angle_name}: {angle_value}" for angle_name, angle_value in angles_from_dolphine.items()])
     angle_label.config(text=angle_text)  
+    angle_label_from_dolphine.config(text=angle_text_from_dolphine)  
 
+import re  
+import os  
+  
+def find_angles_from_dolphine(parent_directory):  
+    angle_dict = {}  
+  
+    # Read ABO.txt  
+    abo_file = parent_directory + "/ABO.txt"  
+    if os.path.exists(abo_file):  
+        with open(abo_file, "r", encoding='ISO-8859-1') as f:  
+            text = f.read()  
+  
+        angle_names = ["SNA", "SNB", "SN - MP", "ANB", "L1 - MP"]  
+  
+        for angle_name in angle_names:  
+            angle_line = re.search(rf"{angle_name}\s*\(º\).*", text)  
+            if angle_line:  
+                angle_parts = angle_line.group(0).split()  
+                try:  
+                    angle_value = float(angle_parts[2])  
+                except ValueError:  
+                    angle_value = float(angle_parts[4])  
+                angle_dict[angle_name] = angle_value  
+            else:  
+                angle_dict[angle_name] = None  
+    else:  
+        print(f"{abo_file} not found.")  
+  
+    # Read Bjork.txt  
+    bjork_file = parent_directory + '/Bjork.txt'  
+    if os.path.exists(bjork_file):  
+        with open(bjork_file, 'r', encoding='ISO-8859-1') as file:  
+            text = file.read()  
+  
+        angle_names = ["Cranio-Mx Base/SN-Palatal Plane", "U1 - Palatal Plane/Mx Base"]  
+  
+        for angle_name in angle_names:  
+            angle_line = re.search(rf"{re.escape(angle_name)}\s*\(º\).*", text)  
+            if angle_line:  
+                angle_parts = angle_line.group(0).split()  
+                try:  
+                    angle_value = float(angle_parts[4])  
+                except:  
+                    angle_value = float(angle_parts[6])  
+                angle_dict[angle_name] = angle_value  
+            else:  
+                angle_dict[angle_name] = None  
+    else:  
+        print(f"{bjork_file} not found.")  
+  
+    return angle_dict  
 
 window = None
 # root_folder = "./"
-patient_folders = [f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))]  
+patient_folders = sorted([f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))])  
+
 dot_names = ["sella", "nasion", "A point", "B point", "upper 1 tip", "upper 1 apex", "lower 1 tip", "lower 1 apex", "ANS", "PNS", "Gonion ", "Menton", "ST Nasion", "Tip of the nose", "Subnasal", "Upper lip", "Lower lip", "ST Pogonion"]  
   
 if not patient_folders:  
@@ -336,7 +391,9 @@ for patient in patient_folders:
     image = cv2.imread(image_path)  
   
     window = Tk()  
-    window.title("Dot Labeling")  
+    window.title("Dot Labeling")
+    window.geometry('1300x750+0+0')
+    # window.attributes('-topmost', True) 
     
     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
     img = ImageTk.PhotoImage(Image.fromarray(img))
@@ -348,28 +405,42 @@ for patient in patient_folders:
     # Display the merged image  
     panel = Label(window, image=merged_image)  
     panel.image = merged_image  
-    panel.pack(side="top", padx=10, pady=10)
-
-
+    panel.pack(side="top", padx=5, pady=5)
 
     panel.bind("<Button-1>", on_image_click)  
     print(patient)
     current_dot_name = dot_names[0]  
     dot_mapping = {}  
   
-    dot_name_label = Label(window, text=f"Select {current_dot_name}", font=("Arial", 14))  
-    dot_name_label.pack(side="top", padx=5, pady=5)  
+    patient_dot_name_frame = Frame(window)  
+    patient_dot_name_frame.pack(side="top", padx=5, pady=5)  
+
+    dot_name_label = Label(patient_dot_name_frame, text=f"Select {current_dot_name}", font=("Arial", 14))
+    patient_name_label = Label(patient_dot_name_frame, text="", font=("Arial", 14))  
+
+    dot_name_label.grid(row=0, column=0, padx=5, pady=5)  
+    patient_name_label.grid(row=0, column=1, padx=5, pady=5)  
+    patient_name_label.config(text=f"|  for Patient: {patient}")  # Add this line to update the patient's name  
+    # dot_name_label.pack(side="top", padx=5, pady=5)  
   
     angle_label = Label(window, text="", font=("Arial", 11))  
-    angle_label.pack(side="top", padx=5, pady=5)  
+    angle_label.pack(side="top", padx=0, pady=0) 
+    angle_label_from_dolphine = Label(window, text="", font=("Arial", 11))  
+    angle_label_from_dolphine.pack(side="top", padx=0, pady=0)  
 
-    # Add the extract coordinates button  
-    extract_button = ttk.Button(window, text="Extract All Coordinates", command=extract_all_coordinates)  
-    extract_button.pack(side="top", padx=5, pady=5)  
+    
 
-    # Add button to reset the dots selected 
-    reset_button = ttk.Button(window, text="Reset", command=reset_points_selected)
-    reset_button.pack(side="top", padx=5, pady=5)
+
+    button_frame = Frame(window)  
+    button_frame.pack(side="top", padx=5, pady=5)  
+
+    extract_button = ttk.Button(button_frame, text="Extract All Coordinates", command=extract_all_coordinates)  
+    reset_button = ttk.Button(button_frame, text="Reset", command=reset_points_selected)  
+
+    extract_button.grid(row=0, column=0, padx=5, pady=5)  
+    reset_button.grid(row=0, column=1, padx=5, pady=5)  
+
+
 
     update_image(ceph_image)  
     window.mainloop()  
@@ -389,7 +460,7 @@ if window is None:
     window.title("No more patients")  
 
     extract_button = ttk.Button(window, text="Extract All Coordinates", command=extract_all_coordinates)  
-    extract_button.pack(side="top", padx=10, pady=10)  
+    extract_button.pack(side="top", padx=5, pady=5)  
     message_label = Label(window, text="You have finished processing all patients in the root directory.", font=("Arial", 14))  
-    message_label.pack(side="top", padx=10, pady=10)
+    message_label.pack(side="top", padx=5, pady=5)
     window.mainloop()  
