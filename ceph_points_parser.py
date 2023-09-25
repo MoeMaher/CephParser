@@ -7,6 +7,7 @@ from tkinter import *
 from PIL import Image, ImageTk  
 from tkinter import ttk  
 import math
+from natsort import natsorted  
 
 def ang(lineA, lineB):
     # Get nicer vector form
@@ -378,7 +379,7 @@ def custom_sort_key(s):
     else:  
         return float('inf')  
 
-patient_folders = sorted([f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))], key=custom_sort_key)  
+patient_folders = natsorted([f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))])  
 print(patient_folders)
 dot_names = ["sella", "nasion", "A point", "B point", "upper 1 tip", "upper 1 apex", "lower 1 tip", "lower 1 apex", "ANS", "PNS", "Gonion ", "Menton", "ST Nasion", "Tip of the nose", "Subnasal", "Upper lip", "Lower lip", "ST Pogonion"]  
   
