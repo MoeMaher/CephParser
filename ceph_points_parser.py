@@ -77,7 +77,7 @@ def find_red_dots(image_path):
     # Use a mask to find red pixels  
     lower_red = (0, 0, 200)  
     upper_red = (50, 50, 255)
-    print(image)
+    # print(image)
     mask = cv2.inRange(image, lower_red, upper_red)  
 
     # Find contours of the red dots  
@@ -370,8 +370,16 @@ def find_angles_from_dolphine(parent_directory):
 
 window = None
 # root_folder = "./"
-patient_folders = sorted([f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))])  
 
+def custom_sort_key(s):  
+    parts = s.split(' - ')  
+    if parts[0].isdigit():  
+        return int(parts[0])  
+    else:  
+        return float('inf')  
+
+patient_folders = sorted([f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))], key=custom_sort_key)  
+print(patient_folders)
 dot_names = ["sella", "nasion", "A point", "B point", "upper 1 tip", "upper 1 apex", "lower 1 tip", "lower 1 apex", "ANS", "PNS", "Gonion ", "Menton", "ST Nasion", "Tip of the nose", "Subnasal", "Upper lip", "Lower lip", "ST Pogonion"]  
   
 if not patient_folders:  
@@ -403,7 +411,7 @@ for patient in patient_folders:
     
     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
     img = ImageTk.PhotoImage(Image.fromarray(img))
-    print(img)
+    # print(img)
     
     # Merge the two images  
     merged_image = merge_images_horizontally(Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)), ceph_image)  
@@ -454,7 +462,8 @@ for patient in patient_folders:
     # Save the coordinates to a CSV file in the patient's folder  
     dot_data = [{"dot_name": name, "x": coords[0], "y": coords[1]} for name, coords in dot_mapping.items()]
     angles = compute_angles(dot_data)
-    dot_data = dot_data + angles
+    angles_from_dolphine = find_angles_from_dolphine(os.path.join(root_folder, patient))
+    dot_data = dot_data + angles + [{"dot_name": angle_name +"_from_dolphine", "x": angle_value, "y": 0} for angle_name, angle_value in angles_from_dolphine.items()]
     print(dot_data)
     pd.DataFrame(dot_data).to_csv(coordinates_file, index=False, columns=["dot_name", "x", "y"])  
 
