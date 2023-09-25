@@ -199,7 +199,13 @@ def load_ceph_image(patient_folder):
   
     ceph_image = cv2.imread(ceph_image_path)  
     ceph_image = cv2.cvtColor(ceph_image, cv2.COLOR_BGR2RGB)  
-    ceph_image = Image.fromarray(ceph_image)  
+    ceph_image = Image.fromarray(ceph_image) 
+    #resize image to be with the bigger side 600
+    width, height = ceph_image.size
+    if width > height:
+        ceph_image = ceph_image.resize((600, int(600*height/width)))
+    else:
+        ceph_image = ceph_image.resize((int(600*width/height), 600))
   
     return ceph_image  
 
