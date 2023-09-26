@@ -133,7 +133,9 @@ def extract_all_coordinates():
         "Lower lip_x": [],  
         "Lower lip_y": [],  
         "ST Pogonion_x": [],  
-        "ST Pogonion_y": []
+        "ST Pogonion_y": [],
+        "gnathion_x": [],
+        "gnathion_y": [],
     }  
   
     for patient in patient_folders:  
@@ -381,7 +383,7 @@ def custom_sort_key(s):
 
 patient_folders = natsorted([f for f in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, f))])  
 print(patient_folders)
-dot_names = ["sella", "nasion", "A point", "B point", "upper 1 tip", "upper 1 apex", "lower 1 tip", "lower 1 apex", "ANS", "PNS", "Gonion ", "Menton", "ST Nasion", "Tip of the nose", "Subnasal", "Upper lip", "Lower lip", "ST Pogonion"]  
+dot_names = ["sella", "nasion", "A point", "B point", "upper 1 tip", "upper 1 apex", "lower 1 tip", "lower 1 apex", "ANS", "PNS", "Gonion ", "Menton", "ST Nasion", "Tip of the nose", "Subnasal", "Upper lip", "Lower lip", "ST Pogonion", "gnathion"]
   
 if not patient_folders:  
     print("No patient folders found. Exiting.")  
