@@ -58,6 +58,9 @@ def sn_ans_pns(ans, pns, s, n):
 def sn_mn_go(go, mn, s, n):  
     return ang([s, n],[go,mn])
 
+def sn_gn_go(go, gn, s, n):  
+    return ang([s, n],[go,gn])
+
 # def print_angles(pateinty):
 #     print("SNA", SNA(pateinty))
 #     print("SNB", SNB(pateinty))
@@ -291,6 +294,10 @@ def compute_angles(dot_data):
         mn = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "Menton"][0]
     except IndexError:
         mn = None
+    try:
+        gn = [[dot["x"], dot["y"]] for dot in dot_data if dot["dot_name"] == "gnathion"][0]
+    except IndexError:
+        gn = None
 
     # s n a b ans pns u_tip u_apex go mn l_tip l_apex 
     if s is not None and n is not None and a is not None:
@@ -307,6 +314,8 @@ def compute_angles(dot_data):
         angles.append({"dot_name": "sn_ans_pns", "x": sn_ans_pns(ans, pns, s, n), "y": round(sn_ans_pns(ans, pns, s, n), 1)})
     if go is not None and mn is not None and s is not None and n is not None:
         angles.append({"dot_name": "sn_mn_go", "x": sn_mn_go(go, mn, s, n), "y": round(sn_mn_go(go, mn, s, n), 1)})
+    if go is not None and gn is not None and s is not None and n is not None:
+        angles.append({"dot_name": "sn_gn_go", "x": sn_gn_go(go, gn, s, n), "y": round(sn_gn_go(go, gn, s, n), 1)})
 
     return angles
 
